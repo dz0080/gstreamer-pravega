@@ -28,7 +28,7 @@ The following components are included:
 - libnice
 - Ubuntu 20.10
 
-This is based on [https://github.com/restreamio/docker-gstreamer](https://github.com/restreamio/docker-gstreamer/tree/6cf16dc77f5d5928abecacf5005e49a3fbccf918).
+This is based on [https://github.com/restreamio/docker-gstreamer](https://github.com/restreamio/docker-gstreamer/tree/b7fdc0329b6ff2833eee4417d92b4b82fb61598b).
 
 ## Image Types
 
