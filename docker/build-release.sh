@@ -13,7 +13,7 @@
 set -ex
 
 ROOT_DIR=$(readlink -f $(dirname $0)/..)
-GSTREAMER_CHECKOUT=${GSTREAMER_CHECKOUT:-1.18.5}
+GSTREAMER_CHECKOUT=${GSTREAMER_CHECKOUT:-1.20.5}
 RUST_JOBS=${RUST_JOBS:-4}
 DOCKER_REPOSITORY=${DOCKER_REPOSITORY}
 FROM_IMAGE=ubuntu:22.04
@@ -29,18 +29,6 @@ if [[ "${BUILD_PROD}" != "0" ]]; then
         -t pravega/gstreamer:pravega-prod \
         --build-arg GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gstreamer.git \
         --build-arg GSTREAMER_CHECKOUT=${GSTREAMER_CHECKOUT} \
-        --build-arg GST_PLUGINS_BASE_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-base.git \
-        --build-arg GST_PLUGINS_BASE_CHECKOUT=${GSTREAMER_CHECKOUT} \
-        --build-arg GST_PLUGINS_BAD_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-bad.git \
-        --build-arg GST_PLUGINS_BAD_CHECKOUT=${GSTREAMER_CHECKOUT} \
-        --build-arg GST_PLUGINS_GOOD_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-good.git \
-        --build-arg GST_PLUGINS_GOOD_CHECKOUT=${GSTREAMER_CHECKOUT} \
-        --build-arg GST_PLUGINS_UGLY_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-ugly.git \
-        --build-arg GST_PLUGINS_UGLY_CHECKOUT=${GSTREAMER_CHECKOUT} \
-        --build-arg GST_LIBAV_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-libav.git \
-        --build-arg GST_LIBAV_CHECKOUT=${GSTREAMER_CHECKOUT} \
-        --build-arg GST_RTSP_SERVER_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-rtsp-server.git \
-        --build-arg GST_RTSP_SERVER_CHECKOUT=${GSTREAMER_CHECKOUT} \
         --build-arg RUST_JOBS=${RUST_JOBS} \
         --build-arg DOCKER_REPOSITORY=${DOCKER_REPOSITORY} \
         --build-arg FROM_IMAGE=${FROM_IMAGE} \
@@ -56,18 +44,6 @@ if [[ "${BUILD_DEV}" != "0" ]]; then
         -t pravega/gstreamer:pravega-dev \
         --build-arg GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gstreamer.git \
         --build-arg GSTREAMER_CHECKOUT=${GSTREAMER_CHECKOUT} \
-        --build-arg GST_PLUGINS_BASE_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-base.git \
-        --build-arg GST_PLUGINS_BASE_CHECKOUT=${GSTREAMER_CHECKOUT} \
-        --build-arg GST_PLUGINS_BAD_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-bad.git \
-        --build-arg GST_PLUGINS_BAD_CHECKOUT=${GSTREAMER_CHECKOUT} \
-        --build-arg GST_PLUGINS_GOOD_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-good.git \
-        --build-arg GST_PLUGINS_GOOD_CHECKOUT=${GSTREAMER_CHECKOUT} \
-        --build-arg GST_PLUGINS_UGLY_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-ugly.git \
-        --build-arg GST_PLUGINS_UGLY_CHECKOUT=${GSTREAMER_CHECKOUT} \
-        --build-arg GST_LIBAV_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-libav.git \
-        --build-arg GST_LIBAV_CHECKOUT=${GSTREAMER_CHECKOUT} \
-        --build-arg GST_RTSP_SERVER_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-rtsp-server.git \
-        --build-arg GST_RTSP_SERVER_CHECKOUT=${GSTREAMER_CHECKOUT} \
         --build-arg RUST_JOBS=${RUST_JOBS} \
         --build-arg DOCKER_REPOSITORY=${DOCKER_REPOSITORY} \
         --build-arg FROM_IMAGE=${FROM_IMAGE} \
