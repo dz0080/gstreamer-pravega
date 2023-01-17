@@ -22,29 +22,8 @@ RUN ["/install-dependencies"]
 COPY docker/ca-certificates /usr/local/share/ca-certificates/
 RUN update-ca-certificates
 
-ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gstreamer.git
+ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gstreamer.git
 ARG GSTREAMER_CHECKOUT=master
-
-ARG GST_PLUGINS_BASE_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-base.git
-ARG GST_PLUGINS_BASE_CHECKOUT=master
-
-ARG GST_PLUGINS_BAD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-bad.git
-ARG GST_PLUGINS_BAD_CHECKOUT=master
-
-ARG GST_PLUGINS_GOOD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-good.git
-ARG GST_PLUGINS_GOOD_CHECKOUT=master
-
-ARG GST_PLUGINS_UGLY_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-ugly.git
-ARG GST_PLUGINS_UGLY_CHECKOUT=master
-
-ARG GST_LIBAV_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-libav.git
-ARG GST_LIBAV_CHECKOUT=master
-
-ARG GST_RTSP_SERVER_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-rtsp-server.git
-ARG GST_RTSP_SERVER_CHECKOUT=master
-
-ARG LIBNICE_REPOSITORY=https://gitlab.freedesktop.org/libnice/libnice.git
-ARG LIBNICE_CHECKOUT=2b38ba23b726694293de53c90b59b28ca11746ab
 
 ADD docker/build-gstreamer/download /
 
@@ -52,13 +31,11 @@ RUN ["/download"]
 
 ADD docker/build-gstreamer/compile /
 
-
 # Compile GStreamer with debug symbols.
 FROM gstreamer-source-code as debug-prod-compile
 ENV DEBUG=true
 ENV OPTIMIZATIONS=true
 RUN ["/compile"]
-
 
 # Build image with Rust compiler.
 FROM debug-prod-compile as builder-base
