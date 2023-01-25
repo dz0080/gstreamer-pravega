@@ -248,7 +248,7 @@ impl PravegaTC {
                         if child_type_name == "PravegaSrc" {
                             debug!(CAT, obj: obj, "start: Setting start-timestamp of element {:?}", child.name());
                             child.set_property_from_str("start-mode", start_mode);
-                            child.set_property("start-timestamp", &resume_at_pts.nanoseconds());
+                            child.set_property("start-timestamp", &resume_at_pts.nanoseconds().unwrap());
                             elements_found = true;
                         }
                     }

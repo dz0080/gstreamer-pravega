@@ -135,7 +135,6 @@ impl TimestampCvt {
         pad: &gst::Pad,
         mut buffer: gst::Buffer,
     ) -> Result<gst::FlowSuccess, gst::FlowError> {
-
         let (input_timestamp_mode, start_timestamp) = {
             let settings = self.settings.lock().unwrap();
             (settings.input_timestamp_mode, settings.start_timestamp)
@@ -208,6 +207,7 @@ impl TimestampCvt {
                         PravegaTimestamp::from_nanoseconds(Some(corrected_input_pts.nseconds()))
                     }
                 };
+                
                 let success = if output_pts.is_some() {
                     if state.prev_output_pts.is_some() && output_pts < state.prev_output_pts {
                         error!(CAT, obj: pad, "Internal error. prev_output_pts={}, output_pts={}",
