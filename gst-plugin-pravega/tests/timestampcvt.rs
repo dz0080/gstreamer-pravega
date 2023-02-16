@@ -38,9 +38,9 @@ fn test_timestampcvt() {
     let first_expected_pts = pravega_to_clocktime(PravegaTimestamp::from_ntp_nanoseconds(first_input_pts.nseconds()));
     println!("first_expected_pts={}", first_expected_pts);
 
-    println!("Simulate rtspsrc with PTS starting at 0.");
-    push_and_validate(&mut h, 0 * gst::MSECOND, Some(0 * gst::MSECOND));
-    push_and_validate(&mut h, 1000 * gst::MSECOND, Some(0 * gst::MSECOND));
+    println!("Simulate start of rtspsrc with PTS starting at 0.");
+    push_and_validate(&mut h, 0 * gst::MSECOND, None);
+    push_and_validate(&mut h, 1000 * gst::MSECOND, None);
     println!("No PTS.");
     push_and_validate(&mut h, ClockTime::none(), None);
     println!("Key frame with multiple buffers at same PTS.");
