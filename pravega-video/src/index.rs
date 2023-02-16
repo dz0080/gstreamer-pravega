@@ -45,7 +45,7 @@ impl IndexRecord {
     }
 }
 
-/**
+/***
    A struct to serialize an IndexRecord for writing to a Pravega byte stream.
 
    The following encoding is used:
