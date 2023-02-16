@@ -29,7 +29,6 @@ apt-get install -y --no-install-recommends \
   gettext \
   git \
   gperf \
-  intel-media-va-driver-non-free \
   iso-codes \
   less \
   liba52-0.7.4-dev \
@@ -75,7 +74,6 @@ apt-get install -y --no-install-recommends \
   libkate-dev \
   liblcms2-dev \
   liblilv-dev \
-  libmfx-dev \
   libmjpegtools-dev \
   libmodplug-dev \
   libmp3lame-dev \
@@ -139,6 +137,13 @@ apt-get install -y --no-install-recommends \
   wayland-protocols \
   wget \
   xdg-dbus-proxy
+
+ARCH=$(dpkg --print-architecture)
+if [[ $ARCH == "amd64" ]]; then
+   apt-get install -y --no-install-recommends \
+     libmfx-dev \
+     intel-media-va-driver-non-free
+fi
 
 pip3 install \
   configargparse \

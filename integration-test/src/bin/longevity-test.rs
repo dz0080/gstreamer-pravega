@@ -125,7 +125,7 @@ impl StreamingBufferValidator {
         event!(Level::DEBUG,
             description = "buffer",
             pts = %pts,
-            duration_ms = buffer.duration().mseconds().unwrap_or_default(),
+            duration_ms = buffer.duration().map(|t| t.mseconds()).unwrap_or_default(),
             offset = buffer.offset(),
             size = buffer.size(),
             flags = ?flags,
