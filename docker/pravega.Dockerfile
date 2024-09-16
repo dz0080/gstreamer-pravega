@@ -22,29 +22,8 @@ RUN ["/install-dependencies"]
 COPY docker/ca-certificates /usr/local/share/ca-certificates/
 RUN update-ca-certificates
 
-ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gstreamer.git
+ARG GSTREAMER_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gstreamer.git
 ARG GSTREAMER_CHECKOUT=master
-
-ARG GST_PLUGINS_BASE_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-base.git
-ARG GST_PLUGINS_BASE_CHECKOUT=master
-
-ARG GST_PLUGINS_BAD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-bad.git
-ARG GST_PLUGINS_BAD_CHECKOUT=master
-
-ARG GST_PLUGINS_GOOD_REPOSITORY=https://gitlab.freedesktop.org/nazar-pc/gst-plugins-good.git
-ARG GST_PLUGINS_GOOD_CHECKOUT=master
-
-ARG GST_PLUGINS_UGLY_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-plugins-ugly.git
-ARG GST_PLUGINS_UGLY_CHECKOUT=master
-
-ARG GST_LIBAV_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-libav.git
-ARG GST_LIBAV_CHECKOUT=master
-
-ARG GST_RTSP_SERVER_REPOSITORY=https://gitlab.freedesktop.org/gstreamer/gst-rtsp-server.git
-ARG GST_RTSP_SERVER_CHECKOUT=master
-
-ARG LIBNICE_REPOSITORY=https://gitlab.freedesktop.org/libnice/libnice.git
-ARG LIBNICE_CHECKOUT=2b38ba23b726694293de53c90b59b28ca11746ab
 
 ADD docker/build-gstreamer/download /
 
@@ -52,13 +31,11 @@ RUN ["/download"]
 
 ADD docker/build-gstreamer/compile /
 
-
 # Compile GStreamer with debug symbols.
 FROM gstreamer-source-code as debug-prod-compile
 ENV DEBUG=true
 ENV OPTIMIZATIONS=true
 RUN ["/compile"]
-
 
 # Build image with Rust compiler.
 FROM debug-prod-compile as builder-base
@@ -71,11 +48,11 @@ FROM debug-prod-compile as builder-base
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
-    RUST_VERSION=1.54.0
+    RUST_VERSION=1.66.0
 
 RUN set -eux; \
     rustArch="x86_64-unknown-linux-gnu"; \
-    url="https://static.rust-lang.org/rustup/archive/1.23.1/${rustArch}/rustup-init"; \
+    url="https://static.rust-lang.org/rustup/archive/1.25.2/${rustArch}/rustup-init"; \
     wget --quiet "$url"; \
     chmod +x rustup-init; \
     ./rustup-init -y --no-modify-path --default-toolchain $RUST_VERSION --default-host ${rustArch}; \
@@ -91,7 +68,7 @@ WORKDIR /usr/src/gstreamer-pravega
 # Install Cargo Chef build tool.
 FROM builder-base as chef-base
 ARG RUST_JOBS=1
-RUN cargo install cargo-chef --jobs ${RUST_JOBS} --version 0.1.22 --locked
+RUN cargo install cargo-chef --jobs ${RUST_JOBS} --version 0.1.51 --locked
 
 
 # Create Cargo Chef recipe.

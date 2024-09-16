@@ -12,9 +12,8 @@
 // Based on https://github.com/sdroege/gstreamer-rs/blob/master/tutorials/src/bin/basic-tutorial-5.rs
 
 use anyhow::Error;
-use clap::Clap;
+use clap::Parser;
 use gst::prelude::*;
-use gstreamer_video as gst_video;
 use gst_video::prelude::*;
 use glib::object::ObjectType;
 use gtk::prelude::*;
@@ -36,19 +35,19 @@ pub const DEFAULT_GST_DEBUG: &str = "FIXME";
 pub const DEFAULT_RUST_LOG: &str = "pravega_video_player=info,warn";
 
 /// Pravega video player.
-#[derive(Clap)]
+#[derive(Parser)]
 struct Opts {
     /// Pravega controller in format "127.0.0.1:9090"
-    #[clap(short, long, default_value = "127.0.0.1:9090")]
+    #[arg(short, long, default_value = "127.0.0.1:9090")]
     controller: String,
     /// The filename containing the Keycloak credentials JSON. If missing or empty, authentication will be disabled.
-    #[clap(short, long, default_value = "", setting(clap::ArgSettings::AllowEmptyValues))]
+    #[arg(short, long, default_value = "")]
     keycloak_file: String,
     /// Pravega scope/stream
-    #[clap(short, long)]
+    #[arg(short, long)]
     stream: String,
     /// If no-sync is set, frames will be displayed as soon as they are decoded
-    #[clap(long)]
+    #[arg(long)]
     no_sync: bool,
 }
 
@@ -72,7 +71,7 @@ impl ops::Deref for AppWindow {
 impl Drop for AppWindow {
     fn drop(&mut self) {
         if let Some(source_id) = self.timeout_id.take() {
-            glib::source_remove(source_id);
+            source_id.remove();
         }
     }
 }
@@ -143,7 +142,7 @@ fn create_ui(playbin: &gst::Pipeline, video_sink: &gst::Element) -> AppWindow {
         if pipeline
             .seek_simple(
                 gst::SeekFlags::FLUSH | gst::SeekFlags::KEY_UNIT,
-                value * gst::NSECOND,
+                value * gst::ClockTime::NSECOND,
             )
             .is_err()
         {
@@ -171,11 +170,11 @@ fn create_ui(playbin: &gst::Pipeline, video_sink: &gst::Element) -> AppWindow {
                     let (_seekable, start, end) = seeking_query.result();
                     debug!("create_ui: seeking_query={:?}, start={:?}, end={:?}", seeking_query, start, end);
                     let start = match start {
-                        gst::GenericFormattedValue::Time(start) => start.nanoseconds(),
+                        gst::GenericFormattedValue::Time(start) => start.map(|t| t.nseconds()),
                         _ => None,
                     };
                     let end = match end {
-                        gst::GenericFormattedValue::Time(end) => end.nanoseconds(),
+                        gst::GenericFormattedValue::Time(end) => end.map(|t| t.nseconds()),
                         _ => None,
                     };
                     (start, end)
@@ -185,7 +184,7 @@ fn create_ui(playbin: &gst::Pipeline, video_sink: &gst::Element) -> AppWindow {
         });
         let pos = pipeline
             .query_position::<gst::ClockTime>()
-            .and_then(|pos| pos.nanoseconds());
+            .and_then(|pos| Some(pos.nseconds()));
 
         debug!("create_ui: start={:?}, end={:?}, pos={:?}", start, end, pos);
 
@@ -251,7 +250,7 @@ fn create_ui(playbin: &gst::Pipeline, video_sink: &gst::Element) -> AppWindow {
             if display_type_name == "GdkX11Display" {
                 extern "C" {
                     pub fn gdk_x11_window_get_xid(
-                        window: *mut glib::object::GObject,
+                        window: *mut glib::gobject_ffi::GObject,
                     ) -> *mut c_void;
                 }
 
@@ -361,18 +360,18 @@ pub fn run() {
         .clone()
         .dynamic_cast::<gst::Pipeline>().unwrap()
         .by_name("src").unwrap();
-    pravegasrc.set_property("controller", &opts.controller).unwrap();
-    pravegasrc.set_property("stream", &opts.stream).unwrap();
-    pravegasrc.set_property("keycloak-file", &opts.keycloak_file).unwrap();
-    pravegasrc.set_property("allow-create-scope", &false).unwrap();
+    pravegasrc.set_property("controller", &opts.controller);
+    pravegasrc.set_property("stream", &opts.stream);
+    pravegasrc.set_property("keycloak-file", &opts.keycloak_file);
+    pravegasrc.set_property("allow-create-scope", &false);
 
     let decodebin = playbin
         .clone()
         .dynamic_cast::<gst::Pipeline>().unwrap()
         .by_name("decodebin").unwrap();
 
-    let video_sink = gst::ElementFactory::make("glimagesink", Some("videosink")).unwrap();
-    video_sink.set_property("sync", &(!opts.no_sync)).unwrap();
+    let video_sink = gst::ElementFactory::make("glimagesink").build().unwrap();
+    video_sink.set_property("sync", &(!opts.no_sync));
 
     let window = create_ui(&playbin, &video_sink);
 
@@ -433,10 +432,10 @@ pub fn run() {
             if is_audio {
                 // decodebin found a raw audiostream, so we build the follow-up pipeline to
                 // play it on the default audio playback device (using autoaudiosink).
-                let queue = gst::ElementFactory::make("queue", None).unwrap();
-                let convert = gst::ElementFactory::make("audioconvert", None).unwrap();
-                let resample = gst::ElementFactory::make("audioresample", None).unwrap();
-                let sink = gst::ElementFactory::make("autoaudiosink", None).unwrap();
+                let queue = gst::ElementFactory::make("queue").build()?;
+                let convert = gst::ElementFactory::make("audioconvert").build()?;
+                let resample = gst::ElementFactory::make("audioresample").build()?;
+                let sink = gst::ElementFactory::make("autoaudiosink").build()?;
 
                 let elements = &[&queue, &convert, &resample, &sink];
                 pipeline.add_many(elements)?;
@@ -457,9 +456,9 @@ pub fn run() {
             } else if is_video {
                 // decodebin found a raw videostream, so we build the follow-up pipeline to
                 // display it using the autovideosink.
-                let queue = gst::ElementFactory::make("queue", None).unwrap();
-                let convert = gst::ElementFactory::make("videoconvert", None).unwrap();
-                let scale = gst::ElementFactory::make("videoscale", None).unwrap();
+                let queue = gst::ElementFactory::make("queue").build()?;
+                let convert = gst::ElementFactory::make("videoconvert").build()?;
+                let scale = gst::ElementFactory::make("videoscale").build()?;
 
                 if let Some(_) = pipeline.by_name("videosink") {
                     pipeline.remove(&video_sink)?;

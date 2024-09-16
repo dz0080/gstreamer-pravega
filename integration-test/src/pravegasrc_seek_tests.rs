@@ -11,7 +11,8 @@
 #[cfg(test)]
 mod test {
     use anyhow::Error;
-    use gst::prelude::*;
+    use gst::prelude::*;    
+    use gst::ClockTime;
     use gstpravega::utils::{clocktime_to_pravega, pravega_to_clocktime};
     use pravega_video::timestamp::{PravegaTimestamp, MSECOND, SECOND};
     use rstest::rstest;
@@ -147,7 +148,7 @@ mod test {
 
         let bus = pipeline.bus().unwrap();
         loop {
-            let msg = bus.timed_pop(100 * gst::MSECOND);
+            let msg = bus.timed_pop(100 * ClockTime::MSECOND);
             trace!("Bus message: {:?}", msg);
 
             // Query the current position (pts) every 100 ms.
@@ -156,7 +157,7 @@ mod test {
             if (now - last_query_time).as_millis() > 100 {
                 if let Some(position) = pipeline.query_position::<gst::ClockTime>() {
                     info!("position={}", position);
-                    let timestamp = clocktime_to_pravega(position);
+                    let timestamp = clocktime_to_pravega(Some(position));
                     if seek_at_pts <= timestamp && timestamp < seek_to_pts {
                         info!("Performing seek");
                         pipeline.seek_simple(

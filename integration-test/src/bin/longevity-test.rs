@@ -9,7 +9,7 @@
 //
 
 use anyhow::Error;
-use clap::Clap;
+use clap::Parser;
 use derive_builder::*;
 use gst::prelude::*;
 use gstpravega::utils::clocktime_to_pravega;
@@ -30,37 +30,37 @@ pub const DEFAULT_RUST_LOG: &str = "longevity_test=info,warn";
 
 /// Continuously read a Pravega video stream, identify problems, and print statistics.
 /// This will log JSON to the console, which can be analyzed using jupyter/notebooks/longevity_test.ipynb.
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 struct Opts {
     /// Pravega controller in format "tcp://127.0.0.1:9090"
-    #[clap(long, env = "PRAVEGA_CONTROLLER_URI", default_value = "tcp://127.0.0.1:9090")]
+    #[arg(long, env = "PRAVEGA_CONTROLLER_URI", default_value = "tcp://127.0.0.1:9090")]
     pravega_controller_uri: String,
     /// The filename containing the Keycloak credentials JSON. If missing or empty, authentication will be disabled.
-    #[clap(long, env = "KEYCLOAK_SERVICE_ACCOUNT_FILE", default_value = "", setting(clap::ArgSettings::AllowEmptyValues))]
+    #[arg(long, env = "KEYCLOAK_SERVICE_ACCOUNT_FILE", default_value = "")]
     keycloak_service_account_file: String,
     /// Pravega scope
-    #[clap(long, env = "PRAVEGA_SCOPE")]
+    #[arg(long, env = "PRAVEGA_SCOPE")]
     pravega_scope: String,
     /// Pravega stream
-    #[clap(long, env = "PRAVEGA_STREAM")]
+    #[arg(long, env = "PRAVEGA_STREAM")]
     pravega_stream: String,
     /// Start reading from the specified PTS. Otherwise, start at the earliest available point.
-    #[clap(long, env = "START_UTC")]
+    #[arg(long, env = "START_UTC")]
     start_utc: Option<String>,
     /// Stop reading at the specified PTS. Otherwise, read until the stream is sealed.
-    #[clap(long, env = "END_UTC")]
+    #[arg(long, env = "END_UTC")]
     end_utc: Option<String>,
     /// Can be mp4 or mpegts
-    #[clap(long, env = "CONTAINER_FORMAT", default_value = "mp4")]
+    #[arg(long, env = "CONTAINER_FORMAT", default_value = "mp4")]
     container_format: String,
     /// Can be avdec_h264 or nvv4l2decoder.
-    #[clap(long, env = "DECODER_PIPELINE", default_value = "avdec_h264")]
+    #[arg(long, env = "DECODER_PIPELINE", default_value = "avdec_h264")]
     decoder_pipeline: String,
     /// Gaps in PTS larger than this will produce a warning.
-    #[clap(long, env = "MAX_GAP_MS", default_value = "1000")]
+    #[arg(long, env = "MAX_GAP_MS", default_value = "1000")]
     max_gap_ms: u64,
     /// No buffers received in this many ms will produce a warning.
-    #[clap(long, env = "MAX_IDLE_MS", default_value = "10000")]
+    #[arg(long, env = "MAX_IDLE_MS", default_value = "10000")]
     max_idle_ms: u64,
 }
 
@@ -125,7 +125,7 @@ impl StreamingBufferValidator {
         event!(Level::DEBUG,
             description = "buffer",
             pts = %pts,
-            duration_ms = buffer.duration().mseconds().unwrap_or_default(),
+            duration_ms = buffer.duration().map(|t| t.mseconds()).unwrap_or_default(),
             offset = buffer.offset(),
             size = buffer.size(),
             flags = ?flags,
@@ -334,18 +334,18 @@ fn main() -> Result<(), Error> {
     let pipeline = pipeline.dynamic_cast::<gst::Pipeline>().unwrap();
 
     let pravegasrc = pipeline.clone().dynamic_cast::<gst::Pipeline>().unwrap().by_name("pravegasrc").unwrap();
-    pravegasrc.set_property("buffer-size", 10*1024*1024 as u32).unwrap();
-    pravegasrc.set_property("controller", &opts.pravega_controller_uri).unwrap();
-    pravegasrc.set_property("stream", &scoped_stream).unwrap();
-    pravegasrc.set_property("keycloak-file", &opts.keycloak_service_account_file).unwrap();
-    pravegasrc.set_property("allow-create-scope", &false).unwrap();
+    pravegasrc.set_property("buffer-size", 10*1024*1024 as u32);
+    pravegasrc.set_property("controller", &opts.pravega_controller_uri);
+    pravegasrc.set_property("stream", &scoped_stream);
+    pravegasrc.set_property("keycloak-file", &opts.keycloak_service_account_file);
+    pravegasrc.set_property("allow-create-scope", &false);
     if let Some(start_utc) = opts.start_utc {
         pravegasrc.set_property_from_str("start-mode", "timestamp");
-        pravegasrc.set_property("start-utc", &start_utc).unwrap();
+        pravegasrc.set_property("start-utc", &start_utc);
     }
     if let Some(end_utc) = opts.end_utc {
         pravegasrc.set_property_from_str("end-mode", "timestamp");
-        pravegasrc.set_property("end-utc", &end_utc).unwrap();
+        pravegasrc.set_property("end-utc", &end_utc);
     }
 
     let max_gap = opts.max_gap_ms * MSECOND;
@@ -440,7 +440,7 @@ fn main() -> Result<(), Error> {
 
     pipeline.set_state(gst::State::Null)?;
     bus.remove_watch().unwrap();
-    glib::source_remove(timeout_id);
+    timeout_id.remove();
     info!("main: END");
     Ok(())
 }

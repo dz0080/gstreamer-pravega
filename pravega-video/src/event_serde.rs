@@ -37,7 +37,7 @@ pub struct EventWithHeader<'a> {
     pub payload: &'a [u8],
 }
 
-/**
+/***
    A struct to serialize an EventWithHeader for writing to a Pravega byte stream.
 
    The following encoding is used:

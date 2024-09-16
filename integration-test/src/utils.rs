@@ -68,7 +68,7 @@ impl From<&gst::BufferRef> for BufferSummary {
         BufferSummary {
             pts: clocktime_to_pravega(buffer.pts()),
             dts: clocktime_to_pravega(buffer.dts()),
-            duration: TimeDelta(buffer.duration().nanoseconds().map(|t| t as i128)),
+            duration: TimeDelta(buffer.duration().map(|t| t.nseconds() as i128)),
             size: buffer.size() as u64,
             offset: buffer.offset(),
             offset_end: buffer.offset_end(),
@@ -351,13 +351,10 @@ impl fmt::Display for BufferListSummary {
 pub fn assert_between_clocktime(name: &str, actual: ClockTime, expected_min: ClockTime, expected_max: ClockTime) {
     debug!("{}: Actual:   {}    {}", name, actual, actual);
     debug!("{}: Expected: {} to {}", name, expected_min, expected_max);
-    if !actual.nanoseconds().is_some() {
-        panic!("{} is None", name);
-    }
-    if expected_min.nanoseconds().is_some() && actual.nanoseconds().unwrap() < expected_min.nanoseconds().unwrap() {
+    if actual.nseconds() < expected_min.nseconds() {
         panic!("{}: actual value {} is less than expected minimum {}", name, actual, expected_min);
     }
-    if expected_max.nanoseconds().is_some() && actual.nanoseconds().unwrap() > expected_max.nanoseconds().unwrap() {
+    if actual.nseconds()> expected_max.nseconds() {
         panic!("{}: actual value {} is greater than expected maximum {}", name, actual, expected_max);
     }
 }
@@ -473,7 +470,7 @@ fn run_pipeline_until_eos(pipeline: &gst::Pipeline) -> Result<(), Error> {
 
 pub fn monitor_pipeline_until_eos(pipeline: &gst::Pipeline) -> Result<(), Error> {
     let bus = pipeline.bus().unwrap();
-    while let Some(msg) = bus.timed_pop(gst::CLOCK_TIME_NONE) {
+    while let Some(msg) = bus.timed_pop(ClockTime::NONE) {
         trace!("Bus message: {:?}", msg);
         match msg.view() {
             gst::MessageView::Eos(..) => break,

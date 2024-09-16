@@ -8,21 +8,21 @@
 // http://www.apache.org/licenses/LICENSE-2.0
 //
 
-use clap::Clap;
+use clap::Parser;
 use gst::prelude::*;
 use log::info;
 
 /// RTSP Camera to Pravega.
-#[derive(Clap)]
+#[derive(Parser)]
 struct Opts {
     /// Pravega controller in format "127.0.0.1:9090"
-    #[clap(short, long, default_value = "127.0.0.1:9090")]
+    #[arg(short, long, default_value = "127.0.0.1:9090")]
     controller: String,
     /// Pravega scope/stream
-    #[clap(short, long)]
+    #[arg(short, long)]
     stream: String,
     /// RTSP URL
-    #[clap(long)]
+    #[arg(long)]
     location: String,
 }
 
@@ -73,11 +73,11 @@ fn main() {
         .clone()
         .dynamic_cast::<gst::Pipeline>().unwrap()
         .by_name("src").unwrap();
-    rtspsrc.set_property("location", &opts.location).unwrap();
+    rtspsrc.set_property("location", &opts.location);
 
     let pravegasink = pipeline.by_name("sink").unwrap();
-    pravegasink.set_property("controller", &opts.controller).unwrap();
-    pravegasink.set_property("stream", &opts.stream).unwrap();
+    pravegasink.set_property("controller", &opts.controller);
+    pravegasink.set_property("stream", &opts.stream);
 
     // Start playing
     pipeline
@@ -86,7 +86,7 @@ fn main() {
 
     // Wait until error or EOS
     let bus = pipeline.bus().unwrap();
-    for msg in bus.iter_timed(gst::CLOCK_TIME_NONE) {
+    for msg in bus.iter_timed(gst::ClockTime::NONE) {
         use gst::MessageView;
 
         match msg.view() {
